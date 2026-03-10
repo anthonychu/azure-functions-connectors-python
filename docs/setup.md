@@ -93,11 +93,14 @@ For local development:
 
 ```bash
 # 1. Start Azurite
-docker run -d --rm --name azurite ...
+docker run -d --rm --name azurite \
+  -p 10000:10000 -p 10001:10001 -p 10002:10002 \
+  mcr.microsoft.com/azure-storage/azurite \
+  azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
-# 2. Create venv and install
+# 2. Create venv and install (use any Python version supported by Azure Functions)
 cd samples/office365-email
-python3.12 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ../../ aiohttp
 
 # 3. Copy and edit local settings
