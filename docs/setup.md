@@ -99,7 +99,7 @@ docker run -d --rm --name azurite \
   azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
 # 2. Create venv and install (use any Python version supported by Azure Functions)
-cd samples/office365-email
+cd samples/office365
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ../../ aiohttp
 

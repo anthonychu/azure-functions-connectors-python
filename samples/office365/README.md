@@ -1,6 +1,6 @@
-# Sample: Office 365 Email Trigger
+# Sample: Office 365 Triggers & Client
 
-This sample demonstrates using `azure-functions-connectors` to process new emails from Office 365.
+This sample demonstrates Office 365 triggers (new email, flagged email, calendar events) and the typed client API.
 
 ## Prerequisites
 
