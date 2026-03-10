@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, TYPE_CHECKING
 
+from .._env import resolve_value
 from .._models import ConnectorItem
 
 if TYPE_CHECKING:
@@ -120,7 +121,7 @@ class TeamsTrigers:
     ) -> Callable:
         return self._parent.generic_trigger(
             connection_id=connection_id,
-            trigger_path=f"/trigger/beta/teams/{team_id}/channels/{channel_id}/messages",
+            trigger_path=f"/trigger/beta/teams/{resolve_value(team_id)}/channels/{resolve_value(channel_id)}/messages",
             trigger_queries={},
         )
 
@@ -132,7 +133,7 @@ class TeamsTrigers:
     ) -> Callable:
         return self._parent.generic_trigger(
             connection_id=connection_id,
-            trigger_path=f"/trigger/beta/teams/{team_id}/channels/{channel_id}/messages_mentioningme",
+            trigger_path=f"/trigger/beta/teams/{resolve_value(team_id)}/channels/{resolve_value(channel_id)}/messages_mentioningme",
             trigger_queries={},
         )
 
