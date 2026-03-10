@@ -153,13 +153,19 @@ class Office365Event(ConnectorItem):
 # ---------------------------------------------------------------------------
 
 class Office365Triggers:
-    """Strongly-typed Office 365 trigger decorators.
+    """Strongly-typed Office 365 trigger decorators and client factory.
 
     Accessed via ``connectors.office365``.
     """
 
     def __init__(self, parent: FunctionsConnectors) -> None:
         self._parent = parent
+
+    def get_client(self, connection_id: str) -> "Office365Client":
+        """Get a typed Office 365 client for calling actions."""
+        from .._client import ConnectorClient
+        from .._clients.office365 import Office365Client
+        return Office365Client(ConnectorClient(connection_id))
 
     def new_email_trigger(
         self,

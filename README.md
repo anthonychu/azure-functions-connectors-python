@@ -31,13 +31,19 @@ async def on_new_email(email: Office365Email):
     print(f"New email from {email.sender}: {email.subject}")
     print(f"Preview: {email.body_preview}")
 
-# Generic trigger for any connector (Salesforce, SharePoint, etc.)
-@connectors.generic_trigger(
-    connection_id="%SALESFORCE_CONNECTION_ID%",
-    trigger_path="/datasets/default/tables/Lead/onnewitems",
-)
-async def on_new_lead(item: dict):
-    print(f"New lead: {item['Name']}")
+# Typed Office 365 client for calling actions
+o365 = connectors.office365.get_client(connection_id="%OFFICE365_CONNECTION_ID%")
+
+async def example_actions():
+    await o365.send_email(to="user@company.com", subject="Hi", body="Hello!")
+    emails = await o365.get_emails(folder="Inbox", top=5)
+    event = await o365.create_event(subject="Meeting", start="...", end="...", timezone="...")
+
+# Generic client for any connector
+client = connectors.get_client(connection_id="%SALESFORCE_CONNECTION_ID%")
+
+async def example_generic():
+    result = await client.invoke("GET", "/datasets/default/tables/Lead/items")
 ```
 
 ## Installation

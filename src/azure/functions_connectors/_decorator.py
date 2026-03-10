@@ -48,6 +48,11 @@ class FunctionsConnectors:
         global _active_connectors
         _active_connectors = self
 
+    def get_client(self, connection_id: str):
+        """Get a generic connector client for calling any action."""
+        from ._client import ConnectorClient
+        return ConnectorClient(connection_id)
+
     def generic_trigger(
         self,
         connection_id: str,
