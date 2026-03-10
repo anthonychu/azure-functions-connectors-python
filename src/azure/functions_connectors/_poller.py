@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import datetime
 import json
 import logging
@@ -220,6 +221,8 @@ async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
                 blob_path = f"{_ITEMS_BLOB_PREFIX}{instance_id}/{uuid.uuid4()}.json"
                 await _store_item_blob(blob_path, item)
                 message = json.dumps({"instance_id": instance_id, "item_blob": blob_path})
-            await queue_client.send_message(message)
+            # Base64-encode: the Functions host (.NET) expects base64 queue messages
+            encoded = base64.b64encode(message.encode("utf-8")).decode("utf-8")
+            await queue_client.send_message(encoded)
     finally:
         await queue_client.close()
