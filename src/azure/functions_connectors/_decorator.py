@@ -52,9 +52,17 @@ def generic_connection_trigger(
         _registered_triggers.append(registration)
         _handler_registry[registration.instance_id] = user_func
 
+        # On FIRST decorator call only, register timer + queue on app
         if not _functions_registered:
             _functions_registered = True
             _register_functions(app)
+
+        logger.info(
+            "Registered connector trigger: %s → %s (instance: %s)",
+            registration.config.trigger_path,
+            user_func.__name__,
+            registration.instance_id,
+        )
 
         return user_func
 
