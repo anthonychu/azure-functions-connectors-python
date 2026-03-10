@@ -117,6 +117,7 @@ No explicit registration call needed — `FunctionsConnectors(app)` handles ever
 
 - **[Office 365 Connector](docs/office365.md)** — 7 triggers, 31 client methods, typed models (`Office365Email`, `Office365Event`)
 - **[Generic APIs](docs/generic.md)** — `generic_trigger()`, `ConnectorClient`, `ConnectorItem`, architecture, RBAC
+- **[Setup & Production Guide](docs/setup.md)** — Creating connections, authentication, RBAC, local dev, deployment
 
 ## Samples
 
