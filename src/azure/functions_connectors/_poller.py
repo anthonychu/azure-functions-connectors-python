@@ -26,7 +26,6 @@ from ._state import (
 
 logger = logging.getLogger(__name__)
 
-_QUEUE_NAME = "connector-trigger-items"
 _MAX_CONCURRENCY = 5
 _CONTAINER_NAME = "connector-trigger-state"
 _ITEMS_BLOB_PREFIX = "items/"
@@ -212,30 +211,38 @@ async def retrieve_item_blob(blob_path: str) -> dict:
 
 
 async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
-    """Send each item as a JSON message to the Storage Queue.
+    """Send each item to all per-handler queues for this instance_id.
 
     Items larger than *MAX_QUEUE_MESSAGE_BYTES* are stored in blob storage and
     a lightweight pointer message is enqueued instead.
     """
+    from ._decorator import get_queue_names_for_instance
+
     conn_str = os.environ.get("AzureWebJobsStorage")
     if not conn_str:
         raise ValueError("AzureWebJobsStorage environment variable is not set")
 
-    queue_client = QueueClient.from_connection_string(conn_str, _QUEUE_NAME)
-    try:
-        try:
-            await queue_client.create_queue()
-        except Exception:
-            pass  # queue already exists
+    queue_names = get_queue_names_for_instance(instance_id)
+    if not queue_names:
+        logger.warning("No queues registered for %s, skipping enqueue", instance_id)
+        return
 
-        for item in items:
-            message = json.dumps({"instance_id": instance_id, "item": item})
-            if len(message.encode("utf-8")) > MAX_QUEUE_MESSAGE_BYTES:
-                blob_path = f"{_ITEMS_BLOB_PREFIX}{instance_id}/{uuid.uuid4()}.json"
-                await _store_item_blob(blob_path, item)
-                message = json.dumps({"instance_id": instance_id, "item_blob": blob_path})
-            # Base64-encode: the Functions host (.NET) expects base64 queue messages
-            encoded = base64.b64encode(message.encode("utf-8")).decode("utf-8")
-            await queue_client.send_message(encoded)
-    finally:
-        await queue_client.close()
+    for queue_name in queue_names:
+        queue_client = QueueClient.from_connection_string(conn_str, queue_name)
+        try:
+            try:
+                await queue_client.create_queue()
+            except Exception:
+                pass  # queue already exists
+
+            for item in items:
+                message = json.dumps({"item": item})
+                if len(message.encode("utf-8")) > MAX_QUEUE_MESSAGE_BYTES:
+                    blob_path = f"{_ITEMS_BLOB_PREFIX}{instance_id}/{uuid.uuid4()}.json"
+                    await _store_item_blob(blob_path, item)
+                    message = json.dumps({"item_blob": blob_path})
+                # Base64-encode: the Functions host (.NET) expects base64 queue messages
+                encoded = base64.b64encode(message.encode("utf-8")).decode("utf-8")
+                await queue_client.send_message(encoded)
+        finally:
+            await queue_client.close()
