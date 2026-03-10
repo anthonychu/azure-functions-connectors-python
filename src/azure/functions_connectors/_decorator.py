@@ -22,6 +22,11 @@ def generic_connection_trigger(
     Stores RAW (unresolved) values; env-var resolution happens at startup.
     """
 
+    if min_interval < 1:
+        raise ValueError("min_interval must be >= 1")
+    if max_interval < min_interval:
+        raise ValueError(f"max_interval ({max_interval}) must be >= min_interval ({min_interval})")
+
     def decorator(func: Callable) -> Callable:
         config = TriggerConfig(
             connection_id=connection_id,

@@ -7,7 +7,9 @@ import datetime
 import json
 import logging
 import os
+import uuid
 
+from azure.storage.blob.aio import BlobServiceClient
 from azure.storage.queue.aio import QueueClient
 
 from ._decorator import get_registered_triggers
@@ -25,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 _QUEUE_NAME = "connector-trigger-items"
 _MAX_CONCURRENCY = 5
+_CONTAINER_NAME = "connector-trigger-state"
+_ITEMS_BLOB_PREFIX = "items/"
+MAX_QUEUE_MESSAGE_BYTES = 48 * 1024  # 48KB, leaving margin for base64 encoding overhead
 
 
 async def poll_all_triggers() -> None:
@@ -49,7 +54,7 @@ async def _poll_single_trigger(trigger: TriggerRegistration) -> None:
 
     try:
         # -- acquire lease ---------------------------------------------------
-        lease_id = await acquire_trigger_lease(instance_id)
+        lease_id = await acquire_trigger_lease(instance_id, lease_duration=60)
         if lease_id is None:
             logger.debug("Skipping %s -- lease held by another instance", instance_id)
             return
@@ -68,6 +73,16 @@ async def _poll_single_trigger(trigger: TriggerRegistration) -> None:
 
         # -- backoff check ---------------------------------------------------
         now = datetime.datetime.now(datetime.timezone.utc)
+        if state is not None and state.last_poll_utc is not None:
+            try:
+                last_poll = datetime.datetime.fromisoformat(state.last_poll_utc)
+            except (ValueError, TypeError):
+                logging.warning(
+                    "Corrupt last_poll_utc for %s, resetting state",
+                    instance_id,
+                )
+                state = None
+
         if state is not None and state.last_poll_utc is not None:
             last_poll = datetime.datetime.fromisoformat(state.last_poll_utc)
             elapsed = (now - last_poll).total_seconds()
@@ -100,6 +115,17 @@ async def _poll_single_trigger(trigger: TriggerRegistration) -> None:
         new_state.runtime_hash = trigger.runtime_hash
 
         if result.status == 200 and result.items:
+            # Renew lease before enqueuing many items to avoid expiry
+            if len(result.items) > 10:
+                try:
+                    blob_client = _get_blob_service_client().get_blob_client(
+                        _CONTAINER_NAME, _blob_path(instance_id)
+                    )
+                    lease_obj = blob_client.get_blob_lease_client(lease_id)
+                    await lease_obj.renew()
+                except Exception:
+                    pass  # Best effort renewal
+
             # Items found -- enqueue and reset backoff
             await _enqueue_items(instance_id, result.items)
             new_state.backoff_seconds = trigger.config.min_interval
@@ -139,8 +165,44 @@ async def _poll_single_trigger(trigger: TriggerRegistration) -> None:
                 )
 
 
+async def _store_item_blob(blob_path: str, item: dict) -> None:
+    """Store an oversized item in blob storage."""
+    conn_str = os.environ.get("AzureWebJobsStorage")
+    if not conn_str:
+        raise ValueError("AzureWebJobsStorage environment variable is not set")
+
+    blob_service = BlobServiceClient.from_connection_string(conn_str)
+    try:
+        blob_client = blob_service.get_blob_client(_CONTAINER_NAME, blob_path)
+        await blob_client.upload_blob(json.dumps(item), overwrite=True)
+    finally:
+        await blob_service.close()
+
+
+async def retrieve_item_blob(blob_path: str) -> dict:
+    """Retrieve an oversized item from blob storage and delete after reading."""
+    conn_str = os.environ.get("AzureWebJobsStorage")
+    if not conn_str:
+        raise ValueError("AzureWebJobsStorage environment variable is not set")
+
+    blob_service = BlobServiceClient.from_connection_string(conn_str)
+    try:
+        blob_client = blob_service.get_blob_client(_CONTAINER_NAME, blob_path)
+        download = await blob_client.download_blob()
+        raw = await download.readall()
+        item = json.loads(raw)
+        await blob_client.delete_blob()
+        return item
+    finally:
+        await blob_service.close()
+
+
 async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
-    """Send each item as a JSON message to the Storage Queue."""
+    """Send each item as a JSON message to the Storage Queue.
+
+    Items larger than *MAX_QUEUE_MESSAGE_BYTES* are stored in blob storage and
+    a lightweight pointer message is enqueued instead.
+    """
     conn_str = os.environ.get("AzureWebJobsStorage")
     if not conn_str:
         raise ValueError("AzureWebJobsStorage environment variable is not set")
@@ -154,6 +216,10 @@ async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
 
         for item in items:
             message = json.dumps({"instance_id": instance_id, "item": item})
+            if len(message.encode("utf-8")) > MAX_QUEUE_MESSAGE_BYTES:
+                blob_path = f"{_ITEMS_BLOB_PREFIX}{instance_id}/{uuid.uuid4()}.json"
+                await _store_item_blob(blob_path, item)
+                message = json.dumps({"instance_id": instance_id, "item_blob": blob_path})
             await queue_client.send_message(message)
     finally:
         await queue_client.close()

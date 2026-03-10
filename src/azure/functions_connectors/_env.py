@@ -47,6 +47,11 @@ def resolve_config(
     trigger_queries: dict,
 ) -> tuple[str, str, dict]:
     """Resolve environment variable references in all config values."""
+    for key, value in trigger_queries.items():
+        if not isinstance(value, str):
+            raise TypeError(
+                f"trigger_queries value for key '{key}' must be a string, got {type(value).__name__}"
+            )
     return (
         resolve_value(connection_id),
         resolve_value(trigger_path),

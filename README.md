@@ -1,4 +1,4 @@
-# azure-functions-connector-triggers
+# azure-functions-connectors
 
 Connector trigger bindings for Azure Functions (Python). Poll Azure managed connectors (Office 365, Salesforce, SharePoint, etc.) for new data using a simple decorator pattern.
 
@@ -16,7 +16,7 @@ Connector trigger bindings for Azure Functions (Python). Poll Azure managed conn
 
 ```python
 import azure.functions as func
-import azure.functions.connector_triggers as ct
+import azure.functions_connectors as ct
 
 app = func.FunctionApp()
 
@@ -35,7 +35,7 @@ ct.register_connector_triggers(app)
 
 ```bash
 # From git
-pip install azure-functions-connector-triggers@git+https://github.com/anthonychu/azure-functions-connector-triggers-python.git
+pip install azure-functions-connectors@git+https://github.com/anthonychu/azure-functions-connectors-python.git
 
 # For local development
 pip install -e .

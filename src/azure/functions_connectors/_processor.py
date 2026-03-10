@@ -7,6 +7,7 @@ import json
 import logging
 
 from ._decorator import get_handler
+from ._poller import retrieve_item_blob
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,11 @@ async def process_queue_message(msg_body: str) -> None:
     """Parse a queue message and dispatch to the registered handler."""
     payload = json.loads(msg_body)
     instance_id: str = payload["instance_id"]
-    item = payload["item"]
+
+    if "item_blob" in payload:
+        item = await retrieve_item_blob(payload["item_blob"])
+    else:
+        item = payload["item"]
 
     handler = get_handler(instance_id)
     if handler is None:

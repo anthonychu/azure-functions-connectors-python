@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob.aio import BlobServiceClient
 
 from ._models import TriggerState
@@ -108,13 +108,15 @@ async def acquire_trigger_lease(
     try:
         lease = await blob.acquire_lease(lease_duration=lease_duration)
         return lease.id
+    except HttpResponseError as e:
+        if e.status_code == 409:  # Already leased
+            return None
+        raise  # Unexpected error — propagate
     except ResourceNotFoundError:
         # Blob doesn't exist yet — seed it, then lease.
         await blob.upload_blob(b"{}", overwrite=True)
         lease = await blob.acquire_lease(lease_duration=lease_duration)
         return lease.id
-    except Exception:  # HttpResponseError when already leased (409)
-        return None
 
 
 async def release_trigger_lease(instance_id: str, lease_id: str) -> None:

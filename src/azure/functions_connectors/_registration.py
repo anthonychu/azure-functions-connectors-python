@@ -52,7 +52,7 @@ def _check_registration() -> None:
 
     if _registered_triggers and not _registration_done:
         logging.getLogger(__name__).error(
-            "azure-functions-connector-triggers: @generic_connection_trigger decorators "
+            "azure-functions-connectors: @generic_connection_trigger decorators "
             "found but register_connector_triggers(app) was never called. "
             "Triggers will NOT fire."
         )

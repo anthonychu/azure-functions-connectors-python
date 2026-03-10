@@ -9,7 +9,7 @@
 
 ## Project Structure
 
-- `src/azure/functions/connector_triggers/` — package source
+- `src/azure/functions_connectors/` — package source
 - `tests/` — unit tests
 - `samples/` — sample Function Apps
 - `notes/` — research and design docs

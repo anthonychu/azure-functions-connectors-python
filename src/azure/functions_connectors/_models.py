@@ -10,7 +10,7 @@ from typing import Callable
 try:
     from importlib.metadata import version
 
-    PACKAGE_VERSION = version("azure-functions-connector-triggers")
+    PACKAGE_VERSION = version("azure-functions-connectors")
 except Exception:
     PACKAGE_VERSION = "0.0.0-dev"
 

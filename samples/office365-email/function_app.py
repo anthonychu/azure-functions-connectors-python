@@ -1,6 +1,6 @@
 import logging
 import azure.functions as func
-import azure.functions.connector_triggers as ct
+import azure.functions_connectors as ct
 
 app = func.FunctionApp()
 

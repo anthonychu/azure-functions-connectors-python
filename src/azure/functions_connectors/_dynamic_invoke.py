@@ -17,17 +17,30 @@ logger = logging.getLogger(__name__)
 _ARM_BASE = "https://management.azure.com"
 _API_VERSION = "2016-06-01"
 
-# Map ARM status-code strings to HTTP integers.
+# Map ARM status-code strings (lowered, no spaces) to HTTP integers.
 _STATUS_MAP: dict[str, int] = {
-    "OK": 200,
-    "Accepted": 202,
-    "NoContent": 204,
-    "BadRequest": 400,
-    "Unauthorized": 401,
-    "Forbidden": 403,
-    "NotFound": 404,
-    "InternalServerError": 500,
+    "ok": 200,
+    "created": 201,
+    "accepted": 202,
+    "nocontent": 204,
+    "badrequest": 400,
+    "unauthorized": 401,
+    "forbidden": 403,
+    "notfound": 404,
+    "internalservererror": 500,
 }
+
+
+def _parse_status(status) -> int:
+    """Convert a status code value (int, numeric string, or name) to an HTTP int."""
+    if isinstance(status, int):
+        return status
+    status_str = str(status).strip()
+    try:
+        return int(status_str)
+    except ValueError:
+        pass
+    return _STATUS_MAP.get(status_str.lower().replace(" ", ""), 500)
 
 
 def poll_trigger(
@@ -106,8 +119,7 @@ def _parse_response(data: dict) -> PollResult:
     inner = data.get("response", {})
 
     # --- status ----------------------------------------------------------
-    status_str = inner.get("statusCode", "InternalServerError")
-    status = _STATUS_MAP.get(status_str, 500)
+    status = _parse_status(inner.get("statusCode", "InternalServerError"))
 
     # --- items -----------------------------------------------------------
     body = inner.get("body")
