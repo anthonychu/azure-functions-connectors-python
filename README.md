@@ -1,16 +1,16 @@
 # azure-functions-connectors
 
-Connector trigger bindings for Azure Functions (Python). Poll Azure managed connectors (Office 365, Salesforce, SharePoint, etc.) for new data using a simple decorator pattern.
+Connector bindings for Azure Functions (Python). Poll Azure managed connectors for new data and call connector actions using a simple decorator and client API.
 
 ## Features
 
-- **Simple decorator API** — `@generic_connection_trigger(...)` on any function
+- **Triggers** — react to new emails, calendar events, Salesforce records, and more
+- **Clients** — send emails, create events, manage contacts, and call any connector action
 - **Works with any Azure managed connector** — Office 365, Salesforce, SharePoint, Dynamics, and 500+ more
+- **Strongly-typed** — `Office365Email`, `Office365Event` models with snake_case properties + dict access
 - **Automatic scale-out** — items dispatched via Storage Queue for parallel processing
 - **Cursor-based polling** — only new items returned, no duplicates
 - **Exponential backoff** — fast when active, quiet when idle
-- **Config change detection** — automatically handles redeployments
-- **Env var support** — `%VAR%` and `$VAR` syntax for connection IDs and queries
 
 ## Quick Start
 
@@ -112,6 +112,11 @@ No explicit registration call needed — `FunctionsConnectors(app)` handles ever
 | Salesforce | Record created | `/datasets/default/tables/{object}/onnewitems` |
 | Salesforce | Record modified | `/datasets/default/tables/{object}/onupdateditems` |
 | SharePoint | New list item | `/datasets/{siteUrl}/tables/{listId}/onnewitems` |
+
+## Documentation
+
+- **[Office 365 Connector](docs/office365.md)** — 7 triggers, 31 client methods, typed models (`Office365Email`, `Office365Event`)
+- **[Generic APIs](docs/generic.md)** — `generic_trigger()`, `ConnectorClient`, `ConnectorItem`, architecture, RBAC
 
 ## Samples
 
