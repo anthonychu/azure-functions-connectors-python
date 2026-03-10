@@ -72,7 +72,15 @@ def poll_trigger(
 
     queries = dict(trigger_queries)
     if cursor is not None:
-        queries["LastPollInformation"] = cursor
+        # Cursor is a JSON-encoded dict of query params from the previous
+        # poll's Location header. Merge them into the request queries.
+        try:
+            cursor_params = json.loads(cursor)
+            if isinstance(cursor_params, dict):
+                queries.update(cursor_params)
+        except (json.JSONDecodeError, TypeError):
+            # Legacy: single-value cursor treated as LastPollInformation
+            queries["LastPollInformation"] = cursor
 
     body = json.dumps({
         "request": {
@@ -132,15 +140,18 @@ def _parse_response(data: dict) -> PollResult:
     else:
         items = []
 
-    # --- cursor (LastPollInformation from Location header) ---------------
+    # --- cursor (from Location header query params) ------------------------
+    # Different connectors use different param names (LastPollInformation,
+    # triggerstate, etc). We capture ALL query params as the cursor.
     new_cursor: str | None = None
     headers = inner.get("headers", {})
     location = headers.get("Location") or headers.get("location")
     if location:
         parsed = parse_qs(urlparse(location).query)
-        lpi = parsed.get("LastPollInformation")
-        if lpi:
-            new_cursor = lpi[0]
+        if parsed:
+            # Flatten: parse_qs returns lists, take first value of each
+            cursor_dict = {k: v[0] for k, v in parsed.items()}
+            new_cursor = json.dumps(cursor_dict)
 
     # --- retry_after -----------------------------------------------------
     retry_after: int | None = None
