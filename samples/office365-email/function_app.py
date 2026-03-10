@@ -1,39 +1,31 @@
 import logging
 import azure.functions as func
 import azure.functions_connectors as fc
+from azure.functions_connectors import Office365Email
 
 app = func.FunctionApp()
 connectors = fc.FunctionsConnectors(app)
 
 
-def _log_email(label: str, item: dict):
-    """Shared logging for email items."""
-    subject = item.get("Subject", "(no subject)")
-    sender = item.get("From", "Unknown")
-    received = item.get("DateTimeReceived", "unknown")
-    preview = item.get("BodyPreview", "")[:100]
-    logging.info(f"[{label}] From: {sender}")
-    logging.info(f"[{label}] Subject: {subject}")
-    logging.info(f"[{label}] Received: {received}")
-    if preview:
-        logging.info(f"[{label}] Preview: {preview}")
-
-
-@connectors.generic_trigger(
+@connectors.office365.on_new_email(
     connection_id="%OFFICE365_CONNECTION_ID%",
-    trigger_path="/Mail/OnNewEmail",
-    trigger_queries={"folderPath": "Inbox"},
+    folder="Inbox",
 )
-async def on_new_email(item: dict):
+async def on_new_email(email: Office365Email):
     """Fires when a new email arrives in Inbox."""
-    _log_email("NEW EMAIL", item)
+    logging.info(f"[NEW EMAIL] From: {email.sender}")
+    logging.info(f"[NEW EMAIL] Subject: {email.subject}")
+    logging.info(f"[NEW EMAIL] Received: {email.received_at}")
+    if email.body_preview:
+        logging.info(f"[NEW EMAIL] Preview: {email.body_preview[:100]}")
 
 
-@connectors.generic_trigger(
+@connectors.office365.on_flagged_email(
     connection_id="%OFFICE365_CONNECTION_ID%",
-    trigger_path="/Mail/OnFlaggedEmail",
-    trigger_queries={"folderPath": "Inbox"},
+    folder="Inbox",
 )
-async def on_flagged_email(item: dict):
+async def on_flagged_email(email: Office365Email):
     """Fires when an email is flagged in Inbox."""
-    _log_email("FLAGGED EMAIL", item)
+    logging.info(f"[FLAGGED EMAIL] From: {email.sender}")
+    logging.info(f"[FLAGGED EMAIL] Subject: {email.subject}")
+    logging.info(f"[FLAGGED EMAIL] Received: {email.received_at}")

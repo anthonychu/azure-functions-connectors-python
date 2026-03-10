@@ -40,6 +40,10 @@ class FunctionsConnectors:
         self._queue_handlers: dict[str, list[tuple[Callable, str]]] = {}
         self._timer_registered = False
 
+        # Typed trigger builders
+        from ._triggers.office365 import Office365Triggers
+        self.office365 = Office365Triggers(self)
+
         # Set module-level ref so poller/cleanup can access us
         global _active_connectors
         _active_connectors = self
@@ -113,8 +117,23 @@ class FunctionsConnectors:
 
     def _register_queue_function(self, user_func: Callable, queue_name: str) -> None:
         from ._poller import retrieve_item_blob
+        import inspect
 
         func_name = user_func.__name__
+
+        # Detect typed item model from handler's type hint
+        hints = {}
+        try:
+            hints = inspect.get_annotations(user_func)
+        except Exception:
+            pass
+        # Get the first parameter's type (skip 'self' if present)
+        item_type = None
+        for param_name, param_type in hints.items():
+            if param_type is not dict and isinstance(param_type, type) and hasattr(param_type, '_data'):
+                # It's a ConnectorItem subclass
+                item_type = param_type
+            break
 
         async def queue_processor(msg: func.QueueMessage) -> None:
             body = msg.get_body().decode("utf-8")
@@ -132,6 +151,10 @@ class FunctionsConnectors:
                 else:
                     logger.error("[%s] Missing item, dropping", func_name)
                     return
+
+            # Auto-wrap in typed model if handler expects one
+            if item_type is not None and isinstance(item, dict):
+                item = item_type(item)
 
             if asyncio.iscoroutinefunction(user_func):
                 await user_func(item)

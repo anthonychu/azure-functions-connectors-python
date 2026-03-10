@@ -17,19 +17,27 @@ Connector trigger bindings for Azure Functions (Python). Poll Azure managed conn
 ```python
 import azure.functions as func
 import azure.functions_connectors as fc
+from azure.functions_connectors import Office365Email
 
 app = func.FunctionApp()
+connectors = fc.FunctionsConnectors(app)
 
-@fc.generic_connection_trigger(
-    app,
+# Strongly-typed trigger with typed item model
+@connectors.office365.on_new_email(
     connection_id="%OFFICE365_CONNECTION_ID%",
-    trigger_path="/Mail/OnNewEmail",
-    trigger_queries={"folderPath": "Inbox"},
+    folder="Inbox",
 )
-async def on_new_email(item: dict):
-    print(f"New email from {item['From']}: {item['Subject']}")
+async def on_new_email(email: Office365Email):
+    print(f"New email from {email.sender}: {email.subject}")
+    print(f"Preview: {email.body_preview}")
 
-fc.register_connector_triggers(app)
+# Generic trigger for any connector (Salesforce, SharePoint, etc.)
+@connectors.generic_trigger(
+    connection_id="%SALESFORCE_CONNECTION_ID%",
+    trigger_path="/datasets/default/tables/Lead/onnewitems",
+)
+async def on_new_lead(item: dict):
+    print(f"New lead: {item['Name']}")
 ```
 
 ## Installation

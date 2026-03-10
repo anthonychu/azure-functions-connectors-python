@@ -134,3 +134,41 @@ class PollResult:
     items: list[dict] = field(default_factory=list)
     cursor: str | None = None
     retry_after: int | None = None
+
+
+class ConnectorItem:
+    """Base class for typed connector items.
+
+    Exposes snake_case properties for common fields while also supporting
+    direct dict-style access (``item["Key"]``, ``item.get("Key")``).
+    """
+
+    def __init__(self, data: dict) -> None:
+        self._data = data
+
+    # -- dict-like access -----------------------------------------------------
+
+    def __getitem__(self, key: str):
+        return self._data[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._data
+
+    def get(self, key: str, default=None):
+        return self._data.get(key, default)
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def items(self):
+        return self._data.items()
+
+    def to_dict(self) -> dict:
+        """Return the underlying raw dict."""
+        return self._data
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._data})"
