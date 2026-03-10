@@ -1,5 +1,7 @@
 # azure-functions-connectors
 
+> ⚠️ **Experimental** — This project is a prototype and not ready for production use. APIs may change without notice.
+
 Connector bindings for Azure Functions (Python). Poll Azure managed connectors for new data and call connector actions using a simple decorator and client API.
 
 ## Features
