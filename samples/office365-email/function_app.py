@@ -3,6 +3,7 @@ import azure.functions as func
 import azure.functions_connectors as fc
 
 app = func.FunctionApp()
+connectors = fc.FunctionsConnectors(app)
 
 
 def _log_email(label: str, item: dict):
@@ -18,8 +19,7 @@ def _log_email(label: str, item: dict):
         logging.info(f"[{label}] Preview: {preview}")
 
 
-@fc.generic_connection_trigger(
-    app,
+@connectors.generic_trigger(
     connection_id="%OFFICE365_CONNECTION_ID%",
     trigger_path="/Mail/OnNewEmail",
     trigger_queries={"folderPath": "Inbox"},
@@ -29,8 +29,7 @@ async def on_new_email(item: dict):
     _log_email("NEW EMAIL", item)
 
 
-@fc.generic_connection_trigger(
-    app,
+@connectors.generic_trigger(
     connection_id="%OFFICE365_CONNECTION_ID%",
     trigger_path="/Mail/OnFlaggedEmail",
     trigger_queries={"folderPath": "Inbox"},
@@ -38,6 +37,3 @@ async def on_new_email(item: dict):
 async def on_flagged_email(item: dict):
     """Fires when an email is flagged in Inbox."""
     _log_email("FLAGGED EMAIL", item)
-
-
-fc.register_connector_triggers(app)

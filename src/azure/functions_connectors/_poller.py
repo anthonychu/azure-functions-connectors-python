@@ -13,7 +13,7 @@ import uuid
 from azure.storage.blob.aio import BlobServiceClient
 from azure.storage.queue.aio import QueueClient
 
-from ._decorator import get_registered_triggers
+from ._decorator import _active_connectors
 from ._dynamic_invoke import poll_trigger
 from ._env import resolve_config
 from ._models import PollResult, TriggerRegistration, TriggerState
@@ -37,7 +37,7 @@ async def poll_all_triggers() -> None:
 
     Multiple handlers on the same trigger path share one poll — dedup by instance_id.
     """
-    triggers = get_registered_triggers()
+    triggers = _active_connectors.get_registered_triggers() if _active_connectors else []
     if not triggers:
         return
 
@@ -216,16 +216,20 @@ async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
     Items larger than *MAX_QUEUE_MESSAGE_BYTES* are stored in blob storage and
     a lightweight pointer message is enqueued instead.
     """
-    from ._decorator import get_queue_names_for_instance
+    from ._decorator import _active_connectors
+
+    if not _active_connectors:
+        logger.warning("No active connectors, skipping enqueue")
+        return
+
+    queue_names = _active_connectors.get_queue_names_for_instance(instance_id)
+    if not queue_names:
+        logger.warning("No queues registered for %s, skipping enqueue", instance_id)
+        return
 
     conn_str = os.environ.get("AzureWebJobsStorage")
     if not conn_str:
         raise ValueError("AzureWebJobsStorage environment variable is not set")
-
-    queue_names = get_queue_names_for_instance(instance_id)
-    if not queue_names:
-        logger.warning("No queues registered for %s, skipping enqueue", instance_id)
-        return
 
     for queue_name in queue_names:
         queue_client = QueueClient.from_connection_string(conn_str, queue_name)

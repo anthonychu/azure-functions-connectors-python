@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from ._decorator import get_registered_triggers
+from ._decorator import _active_connectors
 from ._state import delete_state, list_state_ids
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 async def cleanup_orphan_states() -> None:
     """Delete state blobs whose instance_id has no matching registered trigger."""
-    registered_ids = {t.instance_id for t in get_registered_triggers()}
+    triggers = _active_connectors.get_registered_triggers() if _active_connectors else []
+    registered_ids = {t.instance_id for t in triggers}
     persisted_ids = await list_state_ids()
 
     orphans = [sid for sid in persisted_ids if sid not in registered_ids]
