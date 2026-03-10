@@ -4,35 +4,78 @@ This guide walks through creating and using Azure managed API connections with `
 
 ## 1. Creating an API Connection
 
-Create an Office 365 (or any managed connector) API Connection in Azure:
-
-1. Open **Azure Portal**.
-2. Go to your **Resource Group**.
-3. Select **Create**.
-4. Search for and select **API Connection**.
-5. Choose your connector (for example, **Office 365 Outlook**).
-6. Provide a connection name and required properties.
-7. Select **Create**.
-8. Open the new connection and complete **Authorize**.
+API Connections are ARM resources that store credentials for managed connectors. They cannot be created directly in the Azure Portal — use the CLI or an ARM template.
 
 Connection resources are ARM resources at:
 
 `/subscriptions/{subId}/resourceGroups/{rg}/providers/Microsoft.Web/connections/{name}`
 
-CLI alternative (`az rest`):
+### Using Azure CLI
 
 ```bash
+# Create the connection
 az rest --method PUT \
   --url "https://management.azure.com/subscriptions/{subId}/resourceGroups/{rg}/providers/Microsoft.Web/connections/{connectionName}?api-version=2016-06-01" \
-  --body '{"location": "westus", "properties": {"api": {"id": "/subscriptions/{subId}/providers/Microsoft.Web/locations/westus/managedApis/office365"}, "displayName": "Office 365"}}'
+  --body '{
+    "location": "westus",
+    "properties": {
+      "api": {
+        "id": "/subscriptions/{subId}/providers/Microsoft.Web/locations/westus/managedApis/office365"
+      },
+      "displayName": "Office 365",
+      "parameterValues": {}
+    }
+  }'
+```
+
+Replace `office365` with the connector API name (e.g., `teams`, `salesforce`, `sharepointonline`). To list available connectors:
+
+```bash
+az rest --method GET \
+  --url "https://management.azure.com/subscriptions/{subId}/providers/Microsoft.Web/locations/{location}/managedApis?api-version=2016-06-01" \
+  --query "value[].{name:name, displayName:properties.displayName}" -o table
+```
+
+### Using Bicep / ARM Template
+
+```bicep
+resource connection 'Microsoft.Web/connections@2016-06-01' = {
+  name: 'office365'
+  location: resourceGroup().location
+  properties: {
+    api: {
+      id: subscriptionResourceId('Microsoft.Web/locations/managedApis', resourceGroup().location, 'office365')
+    }
+    displayName: 'Office 365'
+    parameterValues: {}
+  }
+}
 ```
 
 ## 2. Authenticating the Connection
 
-OAuth connectors (like Office 365) require user consent.
+OAuth connectors (like Office 365) require user consent after creation. The connection starts in an **Unauthenticated** state.
 
-- **Portal flow:** open the connection resource → **Edit API Connection** → **Authorize** → sign in → **Save**
-- **Programmatic flow:** use the consent link API described in [`notes/office365-webhook-notes.md`](../notes/office365-webhook-notes.md)
+### Using Azure Portal
+
+1. Navigate to your resource group
+2. Open the API Connection resource
+3. Click **Edit API Connection** → **Authorize** → sign in → **Save**
+
+### Using CLI (Consent Link)
+
+```bash
+# Get your Azure AD Object ID
+OBJECT_ID=$(az ad signed-in-user show --query id -o tsv)
+TENANT_ID=$(az account show --query tenantId -o tsv)
+
+# Get consent link
+az rest --method POST \
+  --url "https://management.azure.com/subscriptions/{subId}/resourceGroups/{rg}/providers/Microsoft.Web/connections/{connectionName}/listConsentLinks?api-version=2016-06-01" \
+  --body "{\"parameters\": [{\"objectId\": \"$OBJECT_ID\", \"tenantId\": \"$TENANT_ID\", \"parameterName\": \"token\", \"redirectUrl\": \"https://portal.azure.com\"}]}"
+```
+
+Open the returned `link` URL in a browser, sign in, and the connection will be authenticated.
 
 The connection stores the OAuth token and is **per-user**.
 
