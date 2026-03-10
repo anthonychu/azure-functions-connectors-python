@@ -52,9 +52,13 @@ Cursor comparison across connectors:
 - Office 365 calendar: `triggerstate` (lowercase, ISO timestamp)
 - Teams: `triggerState` (camelCase S, opaque skiptoken blob)
 
-The cursor is correctly stored and passed back by our SDK. Both `triggerState` (original
-casing) and `triggerstate` (lowercase) work for passing the cursor. The issue is the
-connector's internal processing after items are found.
+The cursor is correctly stored and passed back by our SDK. Additional validation showed:
+
+- `triggerState=<skiptoken...>`: detects items, then fails with 502 (`Unable to compute iso trigger state`).
+- `triggerstate=<skiptoken...>`: returns 202 but **suppresses items** (no crash, but no events delivered).
+- `LastPollInformation=<iso>`: returns 202 with no items for this trigger.
+
+So there is no safe query-shape workaround that both avoids the error and returns items.
 
 ### Other Teams Batch Triggers
 
@@ -92,3 +96,18 @@ Since the connector's polling trigger is broken server-side, alternatives are:
 - Teams trigger definitions remain in the SDK for when the connector bug is fixed
 - Document the timer + client workaround as the recommended approach for Teams triggers
 - The trigger code IS correct — the bug is in the Teams connector's `dynamicInvoke` response pipeline
+
+### Investigation Notes (2026-03-10)
+
+Validated against live `dynamicInvoke` calls with the Teams connection:
+
+- `triggerState` in `queries` is the only form that attempts to return new items, and it fails when items exist.
+- Putting `triggerState` in the path query (instead of `queries`) yields `NotFound`.
+- Adding `$top`, adding `x-ms-operation-context`, and URL-encoding the skiptoken do not fix the failure.
+- Swagger confirms trigger metadata is already configured for ISO extraction:
+  - `x-ms-dev-triggerDateFormat: "iso"`
+  - `x-ms-dev-triggerValuePath: "createdDateTime"`
+  - `x-ms-dev-triggerValueCollection: "value"`
+  - `x-ms-trigger: "batch"`
+
+Conclusion: this is a connector-side trigger-state computation bug, not an SDK request-shaping issue.
