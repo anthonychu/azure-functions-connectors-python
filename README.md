@@ -33,6 +33,14 @@ async def on_new_email(email: Office365Email):
     print(f"New email from {email.sender}: {email.subject}")
     print(f"Preview: {email.body_preview}")
 
+# Generic trigger — works with any connector (Salesforce, SharePoint, etc.)
+@connectors.generic_trigger(
+    connection_id="%SALESFORCE_CONNECTION_ID%",
+    trigger_path="/datasets/default/tables/Lead/onnewitems",
+)
+async def on_new_lead(item: dict):
+    print(f"New lead: {item['Name']}")
+
 # Typed Office 365 client for calling actions
 o365 = connectors.office365.get_client(connection_id="%OFFICE365_CONNECTION_ID%")
 
