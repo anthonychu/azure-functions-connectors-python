@@ -196,6 +196,74 @@ class Office365Triggers:
             trigger_queries=queries,
         )
 
+    def mention_email_trigger(
+        self,
+        connection_id: str,
+        folder: str = "Inbox",
+        from_filter: str | None = None,
+        to_filter: str | None = None,
+        cc_filter: str | None = None,
+        importance: str | None = None,
+        subject_filter: str | None = None,
+        include_attachments: bool = False,
+        only_with_attachments: bool = False,
+    ) -> Callable:
+        """Trigger when a new email mentioning the user arrives."""
+        queries: dict[str, str] = {"folderPath": folder}
+        if from_filter:
+            queries["from"] = from_filter
+        if to_filter:
+            queries["to"] = to_filter
+        if cc_filter:
+            queries["cc"] = cc_filter
+        if importance:
+            queries["importance"] = importance
+        if subject_filter:
+            queries["subjectFilter"] = subject_filter
+        if include_attachments:
+            queries["includeAttachments"] = "true"
+        if only_with_attachments:
+            queries["fetchOnlyWithAttachment"] = "true"
+
+        return self._parent.generic_trigger(
+            connection_id=connection_id,
+            trigger_path="/v3/Mail/OnNewMentionMeEmail",
+            trigger_queries=queries,
+        )
+
+    def shared_mailbox_email_trigger(
+        self,
+        connection_id: str,
+        mailbox_address: str,
+        folder: str = "Inbox",
+        from_filter: str | None = None,
+        to_filter: str | None = None,
+        cc_filter: str | None = None,
+        importance: str | None = None,
+        subject_filter: str | None = None,
+        include_attachments: bool = False,
+    ) -> Callable:
+        """Trigger when a new email arrives in a shared mailbox."""
+        queries: dict[str, str] = {"mailboxAddress": mailbox_address, "folderPath": folder}
+        if from_filter:
+            queries["from"] = from_filter
+        if to_filter:
+            queries["to"] = to_filter
+        if cc_filter:
+            queries["cc"] = cc_filter
+        if importance:
+            queries["importance"] = importance
+        if subject_filter:
+            queries["subjectFilter"] = subject_filter
+        if include_attachments:
+            queries["includeAttachments"] = "true"
+
+        return self._parent.generic_trigger(
+            connection_id=connection_id,
+            trigger_path="/v2/SharedMailbox/Mail/OnNewEmail",
+            trigger_queries=queries,
+        )
+
     def flagged_email_trigger(
         self,
         connection_id: str,
@@ -232,6 +300,23 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/calendars/v3/tables/{calendar_id}/onnewitems",
             trigger_queries={},
+        )
+
+    def upcoming_event_trigger(
+        self,
+        connection_id: str,
+        calendar_id: str = "Calendar",
+        look_ahead_minutes: int | None = None,
+    ) -> Callable:
+        """Trigger when an upcoming event is starting soon."""
+        queries: dict[str, str] = {"table": calendar_id}
+        if look_ahead_minutes is not None:
+            queries["lookAheadTimeInMinutes"] = str(look_ahead_minutes)
+
+        return self._parent.generic_trigger(
+            connection_id=connection_id,
+            trigger_path="/v3/Events/OnUpcomingEvents",
+            trigger_queries=queries,
         )
 
     def event_changed_trigger(
