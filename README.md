@@ -23,7 +23,7 @@ app = func.FunctionApp()
 connectors = fc.FunctionsConnectors(app)
 
 # Strongly-typed trigger with typed item model
-@connectors.office365.on_new_email(
+@connectors.office365.new_email_trigger(
     connection_id="%OFFICE365_CONNECTION_ID%",
     folder="Inbox",
 )

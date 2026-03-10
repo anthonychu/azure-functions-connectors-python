@@ -155,7 +155,7 @@ class Office365Triggers:
     def __init__(self, parent: FunctionsConnectors) -> None:
         self._parent = parent
 
-    def on_new_email(
+    def new_email_trigger(
         self,
         connection_id: str,
         folder: str = "Inbox",
@@ -190,7 +190,7 @@ class Office365Triggers:
             trigger_queries=queries,
         )
 
-    def on_flagged_email(
+    def flagged_email_trigger(
         self,
         connection_id: str,
         folder: str = "Inbox",
@@ -216,7 +216,7 @@ class Office365Triggers:
             trigger_queries=queries,
         )
 
-    def on_new_event(
+    def new_event_trigger(
         self,
         connection_id: str,
         calendar_id: str = "Calendar",
@@ -228,7 +228,7 @@ class Office365Triggers:
             trigger_queries={},
         )
 
-    def on_event_changed(
+    def event_changed_trigger(
         self,
         connection_id: str,
         calendar_id: str = "Calendar",

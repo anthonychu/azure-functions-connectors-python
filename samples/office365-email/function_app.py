@@ -7,7 +7,7 @@ app = func.FunctionApp()
 connectors = fc.FunctionsConnectors(app)
 
 
-@connectors.office365.on_new_email(
+@connectors.office365.new_email_trigger(
     connection_id="%OFFICE365_CONNECTION_ID%",
     folder="Inbox",
 )
@@ -20,7 +20,7 @@ async def on_new_email(email: Office365Email):
         logging.info(f"[NEW EMAIL] Preview: {email.body_preview[:100]}")
 
 
-@connectors.office365.on_flagged_email(
+@connectors.office365.flagged_email_trigger(
     connection_id="%OFFICE365_CONNECTION_ID%",
     folder="Inbox",
 )
