@@ -2,11 +2,13 @@ import logging
 
 from ._client import ConnectorClient, ConnectorError
 from ._clients.office365 import Office365Client
+from ._clients.salesforce import SalesforceClient
 from ._clients.teams import TeamsClient
 from ._decorator import FunctionsConnectors
 from ._models import ConnectorItem
 from ._registration import register_connector_triggers
 from ._triggers.office365 import Office365Email, Office365Event
+from ._triggers.salesforce import SalesforceRecord, SalesforceTriggers
 from ._triggers.teams import TeamsChannel, TeamsMessage
 
 __all__ = [
@@ -17,6 +19,9 @@ __all__ = [
     "Office365Client",
     "Office365Email",
     "Office365Event",
+    "SalesforceClient",
+    "SalesforceRecord",
+    "SalesforceTriggers",
     "TeamsChannel",
     "TeamsClient",
     "TeamsMessage",
