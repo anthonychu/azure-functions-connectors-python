@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "SHAREPOINT_CONNECTION_ID": "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Web/connections/<connection-name>",
+    "SHAREPOINT_SITE_URL": "https://<tenant>.sharepoint.com/sites/<site-name>",
+    "SHAREPOINT_LIST_ID": "<list-guid>",
+    "SHAREPOINT_LIBRARY_ID": "<library-guid>"
+  }
+}
