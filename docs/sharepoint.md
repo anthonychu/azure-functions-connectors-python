@@ -41,6 +41,7 @@ SharePoint site URLs require special encoding internally. **The SDK handles this
 ## Triggers
 
 Trigger decorators are created from `connectors.sharepoint`.
+All trigger methods accept optional `min_interval` (default: 60) and `max_interval` (default: 300) parameters to control polling frequency in seconds.
 
 ### `new_item_trigger(connection_id: str, site_url: str, list_id: str) -> Callable`
 

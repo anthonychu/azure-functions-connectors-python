@@ -40,6 +40,7 @@ Teams trigger decorators are available on `connectors.teams`:
 
 - `new_channel_message_trigger(connection_id, team_id, channel_id)` — fires on new top-level posts in a channel.
 - `channel_mention_trigger(connection_id, team_id, channel_id)` — fires on new top-level posts that mention your account.
+All trigger methods accept optional `min_interval` (default: 60) and `max_interval` (default: 300) parameters to control polling frequency in seconds.
 
 ```python
 from azure.functions_connectors import TeamsMessage

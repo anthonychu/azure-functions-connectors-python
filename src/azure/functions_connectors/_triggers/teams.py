@@ -121,6 +121,8 @@ class TeamsTriggers:
         connection_id: str,
         team_id: str,
         channel_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a new post is made in a Teams channel."""
         from functools import partial
@@ -146,6 +148,8 @@ class TeamsTriggers:
             trigger_path=f"/action-poll/teams/{resolved_team}/channels/{resolved_channel}/messages",
             trigger_queries={},
             poll_function=poll_fn,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def channel_mention_trigger(
@@ -153,6 +157,8 @@ class TeamsTriggers:
         connection_id: str,
         team_id: str,
         channel_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when you are @mentioned in a Teams channel post."""
         from functools import partial
@@ -177,6 +183,8 @@ class TeamsTriggers:
             trigger_path=f"/action-poll/teams/{resolved_team}/channels/{resolved_channel}/mentions",
             trigger_queries={},
             poll_function=poll_fn,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
 

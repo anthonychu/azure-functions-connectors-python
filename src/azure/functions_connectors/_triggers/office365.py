@@ -178,6 +178,8 @@ class Office365Triggers:
         subject_filter: str | None = None,
         include_attachments: bool = False,
         only_with_attachments: bool = False,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a new email arrives."""
         queries: dict[str, str] = {"folderPath": folder}
@@ -200,6 +202,8 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path="/v3/Mail/OnNewEmail",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def mention_email_trigger(
@@ -213,6 +217,8 @@ class Office365Triggers:
         subject_filter: str | None = None,
         include_attachments: bool = False,
         only_with_attachments: bool = False,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a new email mentioning the user arrives."""
         queries: dict[str, str] = {"folderPath": folder}
@@ -235,6 +241,8 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path="/v3/Mail/OnNewMentionMeEmail",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def shared_mailbox_email_trigger(
@@ -248,6 +256,8 @@ class Office365Triggers:
         importance: str | None = None,
         subject_filter: str | None = None,
         include_attachments: bool = False,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a new email arrives in a shared mailbox."""
         queries: dict[str, str] = {"mailboxAddress": mailbox_address, "folderPath": folder}
@@ -268,6 +278,8 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path="/v2/SharedMailbox/Mail/OnNewEmail",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def flagged_email_trigger(
@@ -278,6 +290,8 @@ class Office365Triggers:
         to_filter: str | None = None,
         importance: str | None = None,
         subject_filter: str | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when an email is flagged."""
         queries: dict[str, str] = {"folderPath": folder}
@@ -294,18 +308,24 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path="/v4/Mail/OnFlaggedEmail",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def new_event_trigger(
         self,
         connection_id: str,
         calendar_id: str = "Calendar",
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a new calendar event is created."""
         return self._parent.generic_trigger(
             connection_id=connection_id,
             trigger_path=f"/datasets/calendars/v3/tables/{calendar_id}/onnewitems",
             trigger_queries={},
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def upcoming_event_trigger(
@@ -313,6 +333,8 @@ class Office365Triggers:
         connection_id: str,
         calendar_id: str = "Calendar",
         look_ahead_minutes: int | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when an upcoming event is starting soon."""
         queries: dict[str, str] = {"table": calendar_id}
@@ -323,6 +345,8 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path="/v3/Events/OnUpcomingEvents",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def event_changed_trigger(
@@ -331,6 +355,8 @@ class Office365Triggers:
         calendar_id: str = "Calendar",
         incoming_days: int | None = None,
         past_days: int | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when a calendar event is added, updated, or deleted."""
         queries: dict[str, str] = {}
@@ -343,4 +369,6 @@ class Office365Triggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/calendars/v3/tables/{calendar_id}/onchangeditems",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )

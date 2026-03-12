@@ -106,6 +106,8 @@ class SharePointTriggers:
         connection_id: str,
         site_url: str,
         list_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when new items are created in a SharePoint list."""
         encoded_site = _double_encode(site_url)
@@ -114,6 +116,8 @@ class SharePointTriggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/{encoded_site}/tables/{resolved_list_id}/onnewitems",
             trigger_queries={},
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def updated_item_trigger(
@@ -121,6 +125,8 @@ class SharePointTriggers:
         connection_id: str,
         site_url: str,
         list_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when items are updated in a SharePoint list."""
         encoded_site = _double_encode(site_url)
@@ -129,6 +135,8 @@ class SharePointTriggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/{encoded_site}/tables/{resolved_list_id}/onupdateditems",
             trigger_queries={},
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def new_file_trigger(
@@ -136,6 +144,8 @@ class SharePointTriggers:
         connection_id: str,
         site_url: str,
         library_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when new files are created in a SharePoint document library."""
         encoded_site = _double_encode(site_url)
@@ -144,6 +154,8 @@ class SharePointTriggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/{encoded_site}/tables/{resolved_library_id}/onnewfileitems",
             trigger_queries={},
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def updated_file_trigger(
@@ -151,6 +163,8 @@ class SharePointTriggers:
         connection_id: str,
         site_url: str,
         library_id: str,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when files are updated in a SharePoint document library."""
         encoded_site = _double_encode(site_url)
@@ -159,4 +173,6 @@ class SharePointTriggers:
             connection_id=connection_id,
             trigger_path=f"/datasets/{encoded_site}/tables/{resolved_library_id}/onupdatedfileitems",
             trigger_queries={},
+            min_interval=min_interval,
+            max_interval=max_interval,
         )

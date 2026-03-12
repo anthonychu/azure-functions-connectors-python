@@ -45,6 +45,7 @@ o365 = connectors.office365.get_client(connection_id="office365-conn")
 
 > Trigger decorators are created from `connectors.office365`.
 > Handler payloads can be wrapped as `Office365Email` or `Office365Event` depending on trigger type.
+> All trigger methods accept optional `min_interval` (default: 60) and `max_interval` (default: 300) parameters to control polling frequency in seconds.
 
 ### `new_email_trigger(connection_id: str, folder: str = "Inbox", from_filter: str | None = None, to_filter: str | None = None, cc_filter: str | None = None, importance: str | None = None, subject_filter: str | None = None, include_attachments: bool = False, only_with_attachments: bool = False) -> Callable`
 

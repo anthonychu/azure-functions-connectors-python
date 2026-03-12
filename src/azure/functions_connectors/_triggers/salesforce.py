@@ -64,6 +64,8 @@ class SalesforceTriggers:
         filter: str | None = None,
         orderby: str | None = None,
         select: str | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when new records are created for a Salesforce object."""
         resolved_table = resolve_value(table)
@@ -79,6 +81,8 @@ class SalesforceTriggers:
             connection_id=connection_id,
             trigger_path=f"/trigger/datasets/default/tables/{resolved_table}/onnewitems",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def updated_item_trigger(
@@ -88,6 +92,8 @@ class SalesforceTriggers:
         filter: str | None = None,
         orderby: str | None = None,
         select: str | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when records are updated for a Salesforce object."""
         resolved_table = resolve_value(table)
@@ -103,6 +109,8 @@ class SalesforceTriggers:
             connection_id=connection_id,
             trigger_path=f"/trigger/datasets/default/tables/{resolved_table}/onupdateditems",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )
 
     def deleted_item_trigger(
@@ -112,6 +120,8 @@ class SalesforceTriggers:
         filter: str | None = None,
         orderby: str | None = None,
         top: int | None = None,
+        min_interval: int = 60,
+        max_interval: int = 300,
     ) -> Callable:
         """Trigger when records are deleted for a Salesforce object."""
         resolved_table = resolve_value(table)
@@ -127,4 +137,6 @@ class SalesforceTriggers:
             connection_id=connection_id,
             trigger_path=f"/trigger/datasets/default/tables/{resolved_table}/ondeleteditems",
             trigger_queries=queries,
+            min_interval=min_interval,
+            max_interval=max_interval,
         )

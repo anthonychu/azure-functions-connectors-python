@@ -35,6 +35,7 @@ sf = connectors.salesforce.get_client(connection_id="salesforce-conn")
 ## Triggers
 
 Trigger decorators are created from `connectors.salesforce`.
+All trigger methods accept optional `min_interval` (default: 60) and `max_interval` (default: 300) parameters to control polling frequency in seconds.
 
 ### `new_item_trigger(connection_id: str, table: str, filter: str | None = None, orderby: str | None = None, select: str | None = None) -> Callable`
 
