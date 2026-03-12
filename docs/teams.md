@@ -78,19 +78,19 @@ for ch in channels:
 
 Or use the CLI:
 ```bash
-# Set up variables
 CONN_ID="/subscriptions/.../providers/Microsoft.Web/connections/teams"
-TOKEN=$(az account get-access-token --resource https://management.azure.com --query accessToken -o tsv)
 
 # List teams
-curl -s -X POST "https://management.azure.com${CONN_ID}/dynamicInvoke?api-version=2016-06-01" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"request":{"method":"GET","path":"/beta/me/joinedTeams","queries":{}}}' | jq '.response.body.value[] | {displayName, id}'
+az rest --method POST \
+  --url "https://management.azure.com${CONN_ID}/dynamicInvoke?api-version=2016-06-01" \
+  --body '{"request":{"method":"GET","path":"/beta/me/joinedTeams","queries":{}}}' \
+  --query 'response.body.value[].{name:displayName, id:id}' -o table
 
 # List channels (replace TEAM_ID)
-curl -s -X POST "https://management.azure.com${CONN_ID}/dynamicInvoke?api-version=2016-06-01" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"request":{"method":"GET","path":"/beta/groups/TEAM_ID/channels","queries":{}}}' | jq '.response.body.value[] | {displayName, id}'
+az rest --method POST \
+  --url "https://management.azure.com${CONN_ID}/dynamicInvoke?api-version=2016-06-01" \
+  --body '{"request":{"method":"GET","path":"/beta/groups/TEAM_ID/channels","queries":{}}}' \
+  --query 'response.body.value[].{name:displayName, id:id}' -o table
 ```
 
 Team IDs look like: `f9beb78b-5f1b-4819-a5a0-dabdb6805b12`
