@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Trigger Limitation](#trigger-limitation)
+- [Triggers](#triggers)
 - [Models](#models)
   - [TeamsMessage](#teamsmessage)
   - [TeamsChannel](#teamschannel)
@@ -21,6 +21,9 @@
 
 The Teams connector currently provides:
 
+- Typed **triggers** for Teams channel messages:
+  - `new_channel_message_trigger(...)`
+  - `channel_mention_trigger(...)`
 - A typed **action client** (`TeamsClient`) for Teams messages, channels, chats, tags, members, and meetings.
 - Typed helper models:
   - `TeamsMessage`
@@ -31,11 +34,39 @@ The Teams connector currently provides:
 teams = connectors.teams.get_client(connection_id="%TEAMS_CONNECTION_ID%")
 ```
 
-## Trigger Limitation
+## Triggers
 
-> **Important:** Teams polling triggers are currently unavailable in this SDK.
->
-> The managed connector returns `502 Unable to compute iso trigger state` once items are found, so the SDK intentionally exposes **client-only** Teams support. Use a timer-triggered Azure Function plus `TeamsClient` as the current workaround. See `samples/teams/` for an example.
+Teams trigger decorators are available on `connectors.teams`:
+
+- `new_channel_message_trigger(connection_id, team_id, channel_id)` — fires on new top-level posts in a channel.
+- `channel_mention_trigger(connection_id, team_id, channel_id)` — fires on new top-level posts that mention your account.
+
+```python
+from azure.functions_connectors import TeamsMessage
+
+@connectors.teams.new_channel_message_trigger(
+    connection_id="%TEAMS_CONNECTION_ID%",
+    team_id="%TEAMS_TEAM_ID%",
+    channel_id="%TEAMS_CHANNEL_ID%",
+)
+async def on_channel_message(message: TeamsMessage):
+    print("New channel post:", message.body_preview)
+
+@connectors.teams.channel_mention_trigger(
+    connection_id="%TEAMS_CONNECTION_ID%",
+    team_id="%TEAMS_TEAM_ID%",
+    channel_id="%TEAMS_CHANNEL_ID%",
+)
+async def on_channel_mention(message: TeamsMessage):
+    print("Mentioned in channel:", message.body_preview)
+```
+
+Implementation detail: these triggers use action-based polling (`get_messages()`) and client-side `createdDateTime` cursor tracking behind the scenes. This is transparent to application code.
+
+Current trigger scope:
+
+- Triggers fire for **top-level channel posts only** (replies in threads do not trigger).
+- **Chat message triggers are not supported** by the Teams managed connector actions.
 
 ## Models
 
@@ -233,5 +264,5 @@ meeting = await client.create_meeting(
 
 ## Known Limitations
 
-- **No Teams polling triggers:** use a timer-triggered function plus `TeamsClient`.
+- **Trigger scope limits:** only top-level channel posts trigger; replies in threads and chat messages are not currently supported.
 - **Graph HTTP proxy action is unavailable through `dynamicInvoke`:** the connector expects `Method` and `Uri` as headers, which ARM `dynamicInvoke` does not forward correctly. Use the Microsoft Graph SDK directly for unsupported endpoints.

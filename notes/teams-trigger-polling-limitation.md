@@ -1,5 +1,23 @@
 # Teams Trigger Polling Limitation
 
+## Status (Resolved in SDK)
+
+✅ **Resolved at the SDK layer via action-based polling.**
+
+The typed Teams trigger decorators now work in production by polling the
+`get_messages()` action endpoint and tracking a client-side `createdDateTime`
+cursor. This bypasses the managed connector's broken native polling trigger
+cursor computation.
+
+Current behavior in the SDK:
+
+- `connectors.teams.new_channel_message_trigger(...)` works for new top-level channel posts.
+- `connectors.teams.channel_mention_trigger(...)` works for new top-level posts that mention your account.
+- Replies in threads are not emitted by these triggers.
+- Chat-message triggers are not supported (no list-chat-messages action in the connector).
+
+> This document is retained as **historical investigation context** for the original connector bug.
+
 ## Summary
 
 The Microsoft Teams connector's batch polling triggers (e.g., `OnNewChannelMessage`,

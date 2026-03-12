@@ -63,7 +63,7 @@ Use generic APIs when you need connector-agnostic behavior; use `office365` when
 - `connectors.office365` — typed triggers + typed client
 - `connectors.salesforce` — typed triggers + typed client
 - `connectors.sharepoint` — typed triggers + typed client, with SharePoint site URL double-encoding handled for you
-- `connectors.teams` — typed client only (Teams polling triggers are unavailable because of a connector-side bug)
+- `connectors.teams` — typed triggers + typed client
 
 ---
 
@@ -302,6 +302,6 @@ For implementation notes, see:
 
 ## Connector-specific Notes
 
-- **Teams:** the SDK exposes `connectors.teams.get_client(...)`, but no Teams polling trigger decorators because the connector returns `502 Unable to compute iso trigger state` after items are found.
+- **Teams:** `connectors.teams` exposes channel message triggers and a typed client. Trigger scope currently covers top-level channel posts (including mention detection); replies in threads and chat-message triggers are not supported.
 - **SharePoint:** typed SharePoint helpers automatically double-encode site URLs. Generic APIs require you to encode the site URL yourself.
 - **HTTP request proxy actions:** connectors that model `Method` / `Uri` as headers (notably Office 365 and Teams Graph proxy actions) do not work reliably through ARM `dynamicInvoke`. Prefer typed methods or the native SDK for those scenarios.

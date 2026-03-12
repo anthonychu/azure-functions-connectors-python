@@ -6,7 +6,7 @@ Connector bindings for Azure Functions (Python). Poll Azure managed connectors f
 
 ## Features
 
-- **Typed connector support** — Office 365 (triggers + client), SharePoint (triggers + client), Salesforce (triggers + client), Teams (client only)
+- **Typed connector support** — Office 365 (triggers + client), SharePoint (triggers + client), Salesforce (triggers + client), Teams (triggers + client)
 - **Generic connector support** — `generic_trigger()` and `ConnectorClient` work with Azure managed connectors beyond the typed helpers
 - **Clients** — send emails, create events, manage contacts, query CRM records, and call connector actions
 - **Strongly-typed** — `Office365Email`, `Office365Event` models with snake_case properties + dict access
@@ -19,7 +19,7 @@ Connector bindings for Azure Functions (Python). Poll Azure managed connectors f
 - **Office 365 Outlook** — typed polling triggers and typed client
 - **SharePoint Online** — typed polling triggers and typed client
 - **Salesforce** — typed polling triggers and typed client
-- **Microsoft Teams** — typed client only; polling triggers are currently disabled because of a connector-side bug
+- **Microsoft Teams** — typed polling triggers and typed client
 - **Generic Azure managed connectors** — use `connectors.generic_trigger(...)` and `connectors.get_client(...)`
 
 ## Quick Start
@@ -57,13 +57,22 @@ async def example_actions():
     emails = await o365.get_emails(folder="Inbox", top=5)
     event = await o365.create_event(subject="Meeting", start="...", end="...", timezone="...")
 
+# Typed Teams trigger + typed model
+@connectors.teams.new_channel_message_trigger(
+    connection_id="%TEAMS_CONNECTION_ID%",
+    team_id="%TEAMS_TEAM_ID%",
+    channel_id="%TEAMS_CHANNEL_ID%",
+)
+async def on_channel_message(message: fc.TeamsMessage):
+    print(f"New channel message: {message.body_preview}")
+
 # Generic client for any connector
 client = connectors.get_client(connection_id="%SALESFORCE_CONNECTION_ID%")
 
 async def example_generic():
     result = await client.invoke("GET", "/datasets/default/tables/Lead/items")
 
-# Teams is currently client-only
+# Typed Teams client for calling actions
 teams = connectors.teams.get_client(connection_id="%TEAMS_CONNECTION_ID%")
 
 async def example_teams():
@@ -141,14 +150,14 @@ No explicit registration call needed — `FunctionsConnectors(app)` handles ever
 
 ## Known Limitations
 
-- **Teams triggers are currently unavailable** due to a managed connector bug; use `samples/teams/` for the timer + client workaround.
+- **Teams trigger support currently includes top-level channel posts and @mentions**. Reply events within threads and chat-message triggers are not available.
 - **Office 365 / Teams Graph `http_request()` actions do not work through ARM `dynamicInvoke`** because required `Method` and `Uri` headers are not forwarded.
 - **SharePoint generic paths require double-encoding**; the typed SharePoint helpers handle this automatically.
 
 ## Documentation
 
 - **[Office 365 Connector](docs/office365.md)** — 7 triggers, 31 client methods, typed models (`Office365Email`, `Office365Event`)
-- **[Microsoft Teams Connector](docs/teams.md)** — typed client, typed models, and the current trigger limitation/workaround
+- **[Microsoft Teams Connector](docs/teams.md)** — typed triggers, typed client, typed models, and current Teams-specific limitations
 - **[SharePoint Connector](docs/sharepoint.md)** — 4 triggers, typed models, client helpers, SharePoint encoding notes
 - **[Salesforce Connector](docs/salesforce.md)** — 3 triggers, typed models, client helpers
 - **[Generic APIs](docs/generic.md)** — `generic_trigger()`, `ConnectorClient`, `ConnectorItem`, architecture, RBAC
@@ -159,7 +168,7 @@ No explicit registration call needed — `FunctionsConnectors(app)` handles ever
 - [samples/office365/](samples/office365/) — Office 365 triggers + typed client
 - [samples/sharepoint/](samples/sharepoint/) — SharePoint triggers + typed client
 - [samples/salesforce/](samples/salesforce/) — Salesforce triggers + typed client
-- [samples/teams/](samples/teams/) — Teams client-only workaround
+- [samples/teams/](samples/teams/) — Teams triggers + typed client
 
 ## License
 

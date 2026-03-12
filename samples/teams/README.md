@@ -2,9 +2,9 @@
 
 This sample demonstrates Teams channel triggers and Teams client API usage.
 
-Teams channel message triggers are implemented with action-based polling
-(`get_messages`) so they work even when native Teams polling trigger endpoints
-are unavailable.
+Teams channel message triggers use action-based polling (`get_messages`) with
+SDK-managed cursor tracking, so trigger handlers work reliably for new
+top-level channel posts and @mentions.
 
 ## Prerequisites
 
