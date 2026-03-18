@@ -42,7 +42,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.version_tag }}
-          name: "${{ github.event.inputs.version_tag }} - Beta Release"
+          name: "${{ github.event.inputs.version_tag }}"
           body: |
             ## azure-functions-connectors ${{ github.event.inputs.version_tag }} (Beta)
 

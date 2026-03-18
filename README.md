@@ -86,6 +86,9 @@ async def example_teams():
 ```bash
 # Download and install the .whl from the latest GitHub release
 pip install https://github.com/anthonychu/azure-functions-connectors-python/releases/download/v0.1.0b1/azure_functions_connectors-0.1.0b1-py3-none-any.whl
+```
+
+> **Tip:** Check the [Releases page](https://github.com/anthonychu/azure-functions-connectors-python/releases) for the latest version.
 
 # For local development
 pip install -e .
