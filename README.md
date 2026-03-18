@@ -90,6 +90,7 @@ pip install https://github.com/anthonychu/azure-functions-connectors-python/rele
 
 > **Tip:** Check the [Releases page](https://github.com/anthonychu/azure-functions-connectors-python/releases) for the latest version.
 
+```bash
 # For local development
 pip install -e .
 ```
