@@ -14,6 +14,7 @@ environment variables:
 from __future__ import annotations
 
 import os
+import threading
 
 from azure.identity.aio import DefaultAzureCredential
 from azure.storage.blob.aio import BlobServiceClient
@@ -24,6 +25,7 @@ _ENV_BLOB_URI = "AzureWebJobsStorage__blobServiceUri"
 _ENV_QUEUE_URI = "AzureWebJobsStorage__queueServiceUri"
 _ENV_CLIENT_ID = "AzureWebJobsStorage__clientId"
 
+_lock = threading.Lock()
 _blob_service_client: BlobServiceClient | None = None
 _credential: DefaultAzureCredential | None = None
 
@@ -51,15 +53,19 @@ def get_blob_service_client() -> BlobServiceClient:
     if _blob_service_client is not None:
         return _blob_service_client
 
-    conn_str = os.environ.get(_ENV_CONN_STR)
-    if conn_str:
-        _blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-        return _blob_service_client
+    with _lock:
+        if _blob_service_client is not None:
+            return _blob_service_client
 
-    blob_uri = os.environ.get(_ENV_BLOB_URI)
-    if blob_uri:
-        _blob_service_client = BlobServiceClient(blob_uri, credential=_get_credential())
-        return _blob_service_client
+        conn_str = os.environ.get(_ENV_CONN_STR)
+        if conn_str:
+            _blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+            return _blob_service_client
+
+        blob_uri = os.environ.get(_ENV_BLOB_URI)
+        if blob_uri:
+            _blob_service_client = BlobServiceClient(blob_uri, credential=_get_credential())
+            return _blob_service_client
 
     raise ValueError(
         "Azure Storage is not configured. Set either the "

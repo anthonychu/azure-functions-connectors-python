@@ -147,7 +147,7 @@ az role assignment create \
 | `AzureWebJobsStorage` | Yes (connection string mode) | Storage account connection string (for blob state + queues). Already required by Azure Functions. |
 | `AzureWebJobsStorage__blobServiceUri` | Yes (identity mode) | Blob endpoint, e.g., `https://<account>.blob.core.windows.net/` |
 | `AzureWebJobsStorage__queueServiceUri` | Yes (identity mode) | Queue endpoint, e.g., `https://<account>.queue.core.windows.net/` |
-| `AzureWebJobsStorage__credential` | No | Set to `managedidentity` when using managed identity in Azure |
+| `AzureWebJobsStorage__credential` | No | Set to `managedidentity` for the Azure Functions host. This library does not read this setting directly but it is required for the host's own storage bindings |
 | `AzureWebJobsStorage__clientId` | No | Client ID of a user-assigned managed identity. Omit for system-assigned MI or local dev |
 | `OFFICE365_CONNECTION_ID` | Yes (for Office 365) | Full ARM resource ID of the API connection, e.g., `/subscriptions/.../connections/office365` |
 
@@ -162,7 +162,7 @@ The library supports two ways to authenticate with Azure Storage:
 - **User-assigned managed identity** — also set `AzureWebJobsStorage__clientId`
 - **Local development** — uses Azure CLI / VS Code credentials via `DefaultAzureCredential`
 
-When using identity-based auth, the storage account must have `allowSharedKeyAccess` disabled and the identity must have **Storage Blob Data Contributor** and **Storage Queue Data Contributor** roles.
+When using identity-based auth, the identity must have **Storage Blob Data Contributor** and **Storage Queue Data Contributor** roles. You can optionally disable `allowSharedKeyAccess` on the storage account for stronger security; identity-based auth continues to work even when shared key access is disabled.
 
 ## 6. Local Development
 
