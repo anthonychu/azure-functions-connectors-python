@@ -144,20 +144,30 @@ az role assignment create \
 
 | Setting | Required | Description |
 |---------|----------|-------------|
-| `AzureWebJobsStorage` | Yes | Storage account connection string (for blob state + queues). Already required by Azure Functions. |
+| `AzureWebJobsStorage` | Yes (connection string mode) | Storage account connection string (for blob state + queues). Already required by Azure Functions. |
+| `AzureWebJobsStorage__blobServiceUri` | Yes (identity mode) | Blob endpoint, e.g., `https://<account>.blob.core.windows.net/` |
+| `AzureWebJobsStorage__queueServiceUri` | Yes (identity mode) | Queue endpoint, e.g., `https://<account>.queue.core.windows.net/` |
+| `AzureWebJobsStorage__credential` | No | Set to `managedidentity` for the Azure Functions host. This library does not read this setting directly but it is required for the host's own storage bindings |
+| `AzureWebJobsStorage__clientId` | No | Client ID of a user-assigned managed identity. Omit for system-assigned MI or local dev |
 | `OFFICE365_CONNECTION_ID` | Yes (for Office 365) | Full ARM resource ID of the API connection, e.g., `/subscriptions/.../connections/office365` |
 
-For local development:
+### Storage Authentication Modes
 
-- `AzureWebJobsStorage` can be set to Azurite:
-  `UseDevelopmentStorage=true`
-- Run Azurite via Docker:
-  `docker run -d --rm --name azurite -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0`
+The library supports two ways to authenticate with Azure Storage:
+
+**Connection string (default):** Set `AzureWebJobsStorage` to a storage account connection string. For local development with Azurite, use `UseDevelopmentStorage=true`.
+
+**Identity-based (recommended for production):** Set `AzureWebJobsStorage__blobServiceUri` and `AzureWebJobsStorage__queueServiceUri` instead. This works with:
+- **System-assigned managed identity** — no additional settings needed
+- **User-assigned managed identity** — also set `AzureWebJobsStorage__clientId`
+- **Local development** — uses Azure CLI / VS Code credentials via `DefaultAzureCredential`
+
+When using identity-based auth, the identity must have **Storage Blob Data Contributor** and **Storage Queue Data Contributor** roles. You can optionally disable `allowSharedKeyAccess` on the storage account for stronger security; identity-based auth continues to work even when shared key access is disabled.
 
 ## 6. Local Development
 
 ```bash
-# 1. Start Azurite
+# 1. Start Azurite (for connection string mode)
 docker run -d --rm --name azurite \
   -p 10000:10000 -p 10001:10001 -p 10002:10002 \
   mcr.microsoft.com/azure-storage/azurite \
@@ -171,6 +181,8 @@ pip install -e ../../ aiohttp
 # 3. Copy and edit local settings
 cp local.settings.json.template local.settings.json
 # Edit: set OFFICE365_CONNECTION_ID
+# For identity-based auth: replace AzureWebJobsStorage with
+#   AzureWebJobsStorage__blobServiceUri and AzureWebJobsStorage__queueServiceUri
 
 # 4. Run
 func start
@@ -202,7 +214,16 @@ az functionapp identity assign --name <app-name> --resource-group <rg>
 
 Set `OFFICE365_CONNECTION_ID` (or equivalent) in the Function App's Application Settings.
 
-`AzureWebJobsStorage` is already configured by Azure Functions.
+For identity-based storage, configure the following app settings instead of `AzureWebJobsStorage`:
+
+```
+AzureWebJobsStorage__blobServiceUri = https://<account>.blob.core.windows.net/
+AzureWebJobsStorage__queueServiceUri = https://<account>.queue.core.windows.net/
+AzureWebJobsStorage__credential = managedidentity
+AzureWebJobsStorage__clientId = <client-id>     # only for user-assigned MI
+```
+
+For connection string mode, `AzureWebJobsStorage` is already configured by Azure Functions.
 
 ### Scaling Considerations
 
