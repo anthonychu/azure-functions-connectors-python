@@ -3,30 +3,21 @@
 from __future__ import annotations
 
 import json
-import os
 
 from azure.core.exceptions import HttpResponseError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob.aio import BlobLeaseClient, BlobServiceClient
 
 from ._models import TriggerState
+from ._storage import get_blob_service_client
 
 _CONTAINER_NAME = "connector-trigger-state"
 _BLOB_PREFIX = "triggers/"
 
-_blob_service_client: BlobServiceClient | None = None
 _container_ensured = False
 
 
 def _get_blob_service_client() -> BlobServiceClient:
-    global _blob_service_client
-    if _blob_service_client is None:
-        conn_str = os.environ.get("AzureWebJobsStorage")
-        if not conn_str:
-            raise ValueError(
-                "AzureWebJobsStorage environment variable is not set"
-            )
-        _blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-    return _blob_service_client
+    return get_blob_service_client()
 
 
 async def _ensure_container() -> None:

@@ -7,11 +7,7 @@ import base64
 import datetime
 import json
 import logging
-import os
 import uuid
-
-from azure.storage.blob.aio import BlobServiceClient
-from azure.storage.queue.aio import QueueClient
 
 from ._decorator import _active_connectors
 from ._dynamic_invoke import poll_trigger
@@ -23,6 +19,7 @@ from ._state import (
     release_trigger_lease,
     save_state,
 )
+from ._storage import get_blob_service_client, get_queue_client
 
 logger = logging.getLogger(__name__)
 
@@ -189,16 +186,8 @@ async def _poll_single_trigger(trigger: TriggerRegistration) -> None:
 
 async def _store_item_blob(blob_path: str, item: dict) -> None:
     """Store an oversized item in blob storage."""
-    conn_str = os.environ.get("AzureWebJobsStorage")
-    if not conn_str:
-        raise ValueError("AzureWebJobsStorage environment variable is not set")
-
-    blob_service = BlobServiceClient.from_connection_string(conn_str)
-    try:
-        blob_client = blob_service.get_blob_client(_CONTAINER_NAME, blob_path)
-        await blob_client.upload_blob(json.dumps(item), overwrite=True)
-    finally:
-        await blob_service.close()
+    blob_client = get_blob_service_client().get_blob_client(_CONTAINER_NAME, blob_path)
+    await blob_client.upload_blob(json.dumps(item), overwrite=True)
 
 
 async def retrieve_item_blob(blob_path: str) -> dict:
@@ -208,18 +197,10 @@ async def retrieve_item_blob(blob_path: str) -> dict:
     succeeds. If the handler fails and the queue message retries, the blob
     must still be available.
     """
-    conn_str = os.environ.get("AzureWebJobsStorage")
-    if not conn_str:
-        raise ValueError("AzureWebJobsStorage environment variable is not set")
-
-    blob_service = BlobServiceClient.from_connection_string(conn_str)
-    try:
-        blob_client = blob_service.get_blob_client(_CONTAINER_NAME, blob_path)
-        download = await blob_client.download_blob()
-        raw = await download.readall()
-        return json.loads(raw)
-    finally:
-        await blob_service.close()
+    blob_client = get_blob_service_client().get_blob_client(_CONTAINER_NAME, blob_path)
+    download = await blob_client.download_blob()
+    raw = await download.readall()
+    return json.loads(raw)
 
 
 async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
@@ -239,12 +220,8 @@ async def _enqueue_items(instance_id: str, items: list[dict]) -> None:
         logger.warning("No queues registered for %s, skipping enqueue", instance_id)
         return
 
-    conn_str = os.environ.get("AzureWebJobsStorage")
-    if not conn_str:
-        raise ValueError("AzureWebJobsStorage environment variable is not set")
-
     for queue_name in queue_names:
-        queue_client = QueueClient.from_connection_string(conn_str, queue_name)
+        queue_client = get_queue_client(queue_name)
         try:
             try:
                 await queue_client.create_queue()
